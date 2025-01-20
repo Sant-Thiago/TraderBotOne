@@ -27,7 +27,7 @@ class MetaTrader:
 
         :return: True if connection is successful, False otherwise.
         """
-        self.connected = mt5.initialize(login=self.login, server=self.server, password=self.password)
+        self.connected = mt5.initialize(login=11924496, server=self.server, password=self.password)
         if not self.connected:
             print('Connection failed, error code = ', mt5.last_error())
         return self.connected

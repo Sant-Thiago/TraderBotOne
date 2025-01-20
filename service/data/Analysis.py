@@ -1,8 +1,8 @@
 class Analysis:
     def __init__(self):
-        self.status: str
-        self.value: float
-        self.trend: str
+        self.status: str = None
+        self.value: float = None
+        self.trend: str = None
 
     def get_status(self):
         return self.status
