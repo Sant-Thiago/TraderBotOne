@@ -2,7 +2,7 @@ from service.external.MetaTrader import MetaTrader
 from datetime import datetime, timedelta
 from service.data.treatment import get_uptrend, get_downtrend
 import pandas as pd
-from service.data.Analysis import Analysis
+from service.data.anls import anls
 from dotenv import load_dotenv
 import time
 import os
@@ -23,7 +23,7 @@ def main():
     test_end_date = test_start_date + timedelta(days=1)
     start_date = datetime(datetime.now().year, datetime.now().month, datetime.now().day, 0, 0, 0)
     
-    analysis = Analysis()
+    anls = anls()
     previous_data = None
     in_market = None
     
@@ -31,61 +31,88 @@ def main():
     df = pd.DataFrame(data)
     df['time'] = pd.to_datetime(df['time'], unit='s')
     df.to_csv('data.csv', index=False)
+
+    is_permited = False;
     while connected:
         
         print(df)
         print('')
 
-        prev = df.iloc[-3]
-        if not prev.equals(previous_data):
-            previous_data = prev
-            continue
+        previous_data = df.iloc[-2]
+        if previous_data is None:
+            continue 
         
-        actual_data = df.iloc[-2]
+
+        # if df.size < 3:
+        #     continue;
+
+        actual_data = df.iloc[-1]
         
-        if previous_data['open'] < previous_data['close'] and in_market != 'Comprado':
+        # Se o candle anterior for positivo e não estiver no mercado
+        if previous_data['open'] < previous_data['close']: 
+            # Se não estiver comprado no mercado
+            ## ENTRETANTO DEVE-SE ASSEGURAR QUE ELE PODE TENTAR VENDER EM UMA POSIÇÃO DESVANTAJOSA
+            if anls.in_market is not anls.type.in_market.COMPRADO:
+                ## Aqui devese colocar uma ordem de compra 20 pontos acima da máxima, e um stop em 100 pontos abaixo da mínima
+                anls.in_market = anls.type.in_market.COMPRADO
+                anls.position = anls.type.position.POSITIVO
+                anls.strengh += 1
+
+            # Se não estiver vendido no mercado
+            elif anls.in_market is not anls.type.in_market.VENDIDO:
+                 ## Aqui devese colocar uma ordem de venda 20 pontos abaixo da mínima, e um stop em 100 pontos acima da máxima
+                anls.in_market = anls.type.in_market.VENDIDO
+                anls.position = anls.type.position.NEGATIVO
+                anls.strengh += 1
+            
+            else:
+                ## Não sei ainda
+                
+
+                              
+            # Se o candle atual for positivo 
             if actual_data['open'] < actual_data['close']:
                 if previous_data['close'] < actual_data['close']:
                     
-                    if analysis.get_trend() == 'Uptrend':
-                        analysis.set_status('Strong')
+                    if anls.trend == 'Uptrend':
+                        anls.strength = 2
                         print('Entra comprado')
                         in_market = 'Comprado'
             
                     else:
-                        analysis.set_trend('Uptrend')
-                        analysis.set_status('Medium')
+                        anls.set_trend('Uptrend')
+                        anls.set_status('Medium')
             
                     if previous_data['high'] < actual_data['close']:
-                        analysis.set_status('Strong')
+                        anls.set_status('Strong')
             
                     if previous_data['high'] > actual_data['high']:
-                        analysis.set_status('Week')
+                        anls.set_status('Week')
 
             elif actual_data['open'] > actual_data['close']:
-                analysis.set_trend('Sideway')
-                analysis.set_status('Week')
+                anls.set_trend('Sideway')
+                anls.set_status('Week')
         
         elif previous_data['open'] > previous_data['close'] and in_market != 'Vendido':
             if actual_data['open'] > actual_data['close']:
                 if previous_data['close'] > actual_data['close']:
                     
-                    if analysis.get_trend() == 'Downtrend':
-                        analysis.set_status('Strong')
+                    if anls.get_trend() == 'Downtrend':
+                        anls.set_status('Strong')
                         print('Entra vendido')
                         in_market = 'Vendido'
                     
                     else:
-                        analysis.set_trend('Downtrend')
-                        analysis.set_status('Medium')
+                        anls.set_trend('Downtrend')
+                        anls.set_status('Medium')
 
                     if previous_data['low'] < actual_data['close']:
-                        analysis.set_status('Strong')
+                        anls.set_status('Strong')
 
                     if previous_data['low'] > actual_data['low']:
-                        analysis.set_status('Week')
+                        anls.set_status('Week')
 
-        print(analysis)
+        print(anls)
         print('\n\n')
         time.sleep(1)
 
