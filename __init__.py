@@ -48,6 +48,12 @@ def main():
 
         actual_data = df.iloc[-1]
         
+        if anls.type
+        if previous_data['open'] < previous_data['close']:
+            anls.position = anls.type.position.POSITIVO
+            anls.strength = anls.type.strength.ONE
+
+
         # Se o candle anterior for positivo e não estiver no mercado
         if previous_data['open'] < previous_data['close']: 
             # Se não estiver comprado no mercado
